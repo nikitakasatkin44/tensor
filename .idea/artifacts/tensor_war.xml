@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="tensor:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <root id="archive" name="Tensor.war">
+      <element id="artifact" artifact-name="tensor:war exploded" />
+    </root>
+  </artifact>
+</component>
