@@ -6,6 +6,8 @@ package com.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationTrustResolver;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,14 +17,27 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.security.Principal;
+
 @Controller
 public class TensorController {
 
+    @Autowired
+    AuthenticationTrustResolver authenticationTrustResolver;
 
-    @RequestMapping(value = { "/", "/home" }, method = RequestMethod.GET)
-    public String homePage(ModelMap model) {
-        model.addAttribute("greeting", "Hi, Welcome to mysite");
-        return "welcome";
+    @RequestMapping(value = { "/", "/index" }, method = RequestMethod.GET)
+    public String homePage(ModelMap model, Principal principal) {
+
+        String name = "Таинственный незнакомец";
+
+        try {
+            if (principal.getName() != null) {
+                name = principal.getName();
+            }
+        } catch(Exception e){}
+
+        model.addAttribute("username", name);
+        return "index";
     }
 
     @RequestMapping(value = "/admin", method = RequestMethod.GET)
@@ -45,7 +60,11 @@ public class TensorController {
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public String loginPage() {
-        return "login";
+        if (isCurrentAuthenticationAnonymous()) {
+            return "login";
+        } else {
+            return "redirect:/index";
+        }
     }
 
     @RequestMapping(value="/logout", method = RequestMethod.GET)
@@ -55,6 +74,23 @@ public class TensorController {
             new SecurityContextLogoutHandler().logout(request, response, auth);
         }
         return "redirect:/login?logout";
+    }
+
+    @RequestMapping(value="/about", method = RequestMethod.GET)
+    public String aboutPage(ModelMap model) {
+        model.addAttribute("user", getPrincipal());
+        return "about";
+    }
+
+    @RequestMapping(value="/games", method = RequestMethod.GET)
+    public String gamesPage(ModelMap model) {
+        model.addAttribute("user", getPrincipal());
+        return "games";
+    }
+
+    @RequestMapping(value="login-test", method = RequestMethod.GET)
+    public String loginPageTest() {
+        return "login-test";
     }
 
     private String getPrincipal(){
@@ -67,6 +103,11 @@ public class TensorController {
             userName = principal.toString();
         }
         return userName;
+    }
+
+    private boolean isCurrentAuthenticationAnonymous() {
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authenticationTrustResolver.isAnonymous(authentication);
     }
 
 
